@@ -2,7 +2,7 @@ import Users from './users.js';
 import { client_request } from '../globals.js';
 import { send_all } from '../main.js';
 
-const users = new Users();
+export const users = new Users();
 
 client_request.add('login', ({ data })=>{
 
@@ -22,6 +22,6 @@ client_request.add('logout', ({ data })=>{
     send_all('logout', { user })
 })
 
-client_request.add('get/users', ({ ws })=>{
+client_request.add('users', ({ ws })=>{
     ws.send_client('users', { users: users.active_users })
 })

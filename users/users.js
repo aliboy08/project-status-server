@@ -37,6 +37,10 @@ export default class Users {
         return true;
     }
 
+    get_user_data(user_email){
+        return this.all_users.find(i=>i.email==user_email);
+    }
+
     add_user(user){
 
         if( this.all_users.find(i=>i.email==user.email) ) return;

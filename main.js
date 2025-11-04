@@ -3,8 +3,6 @@ import { hooks, client_request } from './globals.js';
 
 import './users/init.js';
 import './projects/init.js';
-import './pages/init.js';
-import './components/init.js';
 
 const wss = new WebSocketServer({ port: 8080 });
 
