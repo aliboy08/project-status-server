@@ -1,0 +1,12 @@
+{
+  "name": "project-status-server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}
