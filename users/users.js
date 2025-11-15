@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { client_request } from '../globals.js';
+import { client_request, hooks } from '../globals.js';
 import { send_all } from '../main.js';
 
 const data_file_path = './data/users.json';
@@ -11,6 +11,9 @@ const active_users = [];
 client_request.on('users', send_users)
 client_request.on('login', login)
 client_request.on('logout', logout)
+
+hooks.on('project/get_data', add_pages_user_data)
+hooks.set('user/data', get_user_data)
 
 function login({ data }){
 
@@ -68,4 +71,22 @@ function get_file_data(){
 
 function save(){
     fs.writeFile(data_file_path, JSON.stringify(users), ()=>{});
+}
+
+function add_pages_user_data({ data, project }){
+
+    if( !data?.pages?.length ) return;
+
+    data.pages.forEach(page=>{
+
+        if( !page?.assigned?.length ) return;
+
+        const users_data = [];
+
+        page.assigned.forEach(user=>{
+            users_data.push(get_user_data(user));
+        })
+
+        page.assigned = users_data;
+    })
 }

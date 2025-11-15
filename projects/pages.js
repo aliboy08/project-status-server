@@ -22,7 +22,9 @@ function init_pages(project){
             assigned: [],
         };
 
-        init_page(page_data, project)
+        project.data.pages.push(page_data);
+
+        return init_page(page_data, project)
     }
 
     project.get_page = (page_id)=>{        
@@ -33,7 +35,7 @@ function init_pages(project){
         init_page(page_data, project)
     })
 
-    project.hooks.on('data', data=>{
+    project.hooks.on('data/save', data=>{
         data.pages = project.pages.map(page=>page.data)
     })
 }
@@ -41,7 +43,7 @@ function init_pages(project){
 function init_page(page_data, project){
 
     const remove = ()=>{
-        const index = project.pages.findIndex(page);
+        const index = project.pages.indexOf(page);
         project.pages.splice(index, 1);
         project.save();
     }
@@ -59,23 +61,18 @@ function init_page(page_data, project){
     }
     
     project.pages.push(page)
+
+    return page;
 }
 
 function page_add({ data }){
 
     const project = hooks.get('project', data.project_slug)
     if( !project ) return;
+    
+    const page = project.add_page(data.page_name)
 
-    const page = {
-        id: generate_id(data.page_name, project.pages),
-        name: data.page_name,
-        status: null,
-        assigned: [],
-    };
-
-    project.pages.push(page);
-
-    data.page_data = page;
+    data.page_data = page.data;
 
     send_all('page/add', data)
     
@@ -103,7 +100,10 @@ function page_assign({ data }){
     const page = project.get_page(data.page_id)
     if( !page ) return;
 
-    page.assign(data.user)
+    const user_email = data.user;
+    page.assign(user_email)
+
+    data.user_data = hooks.get('user/data', user_email);
 
     send_all('page/assign', data)
 }

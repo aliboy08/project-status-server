@@ -1,1 +1,1 @@
-{"name":"Test 1","slug":"test-1","status":null,"pages":[{"id":"contact","name":"Contact","status":null,"assigned":[]},{"id":"home","name":"Home","status":null,"assigned":[]}]}
+{"name":"Test 1","slug":"test-1","status":null,"pages":[{"id":"aaa","name":"AAA","status":null,"assigned":["alistairponce@gmail.com"]},{"id":"bbb","name":"BBB","status":null,"assigned":["alistairponce@gmail.com"]},{"id":"ccc","name":"CCC","status":null,"assigned":["alistairponce@gmail.com"]}]}

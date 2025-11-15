@@ -8,7 +8,9 @@ hooks.set('project/init', init_project)
 function send_project({ data, ws }){
     const project = hooks.get('project', data.slug)
     if( !project ) return;
-    ws.send_client('project', { project: project.data })
+    ws.send_client('project', {
+        project: project.get_data()
+    })
 }
 
 function init_project(file){
@@ -23,20 +25,24 @@ function init_project(file){
         hooks: new Hooks(),
     }
 
-    const get_data = ()=>{
-        const data = project.data;
-        project.hooks.do('data', data)
+    project.get_data = ()=>{
+        // const data = project.data;
+        // const project_data = {...project.data};
+        const data = structuredClone(project.data)
+        // project.hooks.do('data/get', data)
+        hooks.do('project/get_data', {data, project})
         return data;
     }
 
-    const save = ()=>{
-        fs.writeFile(file_path, JSON.stringify(project.get_data()), err=>{
+    project.save = ()=>{
+
+        const data = project.data;
+        project.hooks.do('data/save', data)
+
+        fs.writeFile(file_path, JSON.stringify(data), err=>{
             if (err) console.error('project save error:', err);
         });
-    }
-
-    project.get_data = get_data;
-    project.save = save;
+    };
 
     hooks.do('project/init', project)
 
