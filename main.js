@@ -1,10 +1,13 @@
 import { WebSocketServer } from 'ws';
 import { hooks, client_request } from './globals.js';
 
-import './users/init.js';
+import './users/users.js';
 import './projects/init.js';
 
 const wss = new WebSocketServer({ port: 8080 });
+
+hooks.do('before_init');
+hooks.do('init');
 
 wss.on('connection', (ws)=>{
 

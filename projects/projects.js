@@ -1,39 +1,30 @@
 import fs from 'fs';
-import Project from './project.js';
+import { hooks, client_request } from '../globals.js';
 
-export default class Projects {
+const projects = [];
 
-    constructor(){
+hooks.on('init', init_projects)
+hooks.set('project', get_project)
+client_request.on('projects', send_projects)
 
-        this.projects = [];
+function get_project(slug){
+    return projects.find(i=>i.data.slug===slug);
+}
 
-        for( const file of fs.readdirSync('./data/projects') ) {
-            this.projects.push(new Project(file));
-        }
-    }
-
-    get_projects_overview(){
-
-        const projects = [];
-
-        this.projects.forEach(project=>{
-            projects.push({
-                name: project.data.name,
+function send_projects({ ws }){
+    ws.send_client('projects', {
+        projects: projects.map(project=>{
+            return {
+                name: project.data.name,  
                 slug: project.data.slug,
-            })
+            }
         })
+    })
+}
 
-        return projects;
+function init_projects(){
+    for( const file of fs.readdirSync('./data/projects') ) {
+        const project = hooks.get('project/init', file)
+        projects.push(project)
     }
-
-    get_project(slug){
-        return this.projects.find(i=>i.data.slug===slug);
-    }
-
-    get_project_data(slug){
-        const project = this.get_project(slug)
-        if( !project ) return null;
-        return project.get_data();
-    }
-    
 }

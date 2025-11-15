@@ -1,38 +1,44 @@
 import fs from 'fs';
-import Pages from './pages.js';
+import Hooks from '../lib/hooks.js';
+import { hooks, client_request } from '../globals.js';
 
-export default class Project {
+client_request.on('project', send_project)
+hooks.set('project/init', init_project)
 
-    constructor(file){
+function send_project({ data, ws }){
+    const project = hooks.get('project', data.slug)
+    if( !project ) return;
+    ws.send_client('project', { project: project.data })
+}
 
-        this.file_path = `./data/projects/${file}`;
+function init_project(file){
 
-        this.data = JSON.parse(fs.readFileSync(this.file_path, 'utf8'))
-        
-        this.name = this.data.name;
-        this.slug = this.data.slug;
-        this.status = this.data.status ?? null;
+    const file_path = `./data/projects/${file}`;
 
-        this.pages = new Pages(this);
+    const data = JSON.parse(fs.readFileSync(file_path, 'utf8'));
+    data.status = data.status ?? null;
+    
+    const project = {
+        data,
+        hooks: new Hooks(),
     }
 
-    get_data(mode = 'default'){
-
-        return {
-            name: this.name,
-            slug: this.slug,
-            status: this.status,
-            pages: this.pages.get_data(mode),
-        }
+    const get_data = ()=>{
+        const data = project.data;
+        project.hooks.do('data', data)
+        return data;
     }
 
-    save(){
-        
-        const data = JSON.stringify(this.get_data('save'));
-
-        fs.writeFile(this.file_path, data, err=>{
-            if (err) console.error('Project file write error:', err);
+    const save = ()=>{
+        fs.writeFile(file_path, JSON.stringify(project.get_data()), err=>{
+            if (err) console.error('project save error:', err);
         });
     }
 
+    project.get_data = get_data;
+    project.save = save;
+
+    hooks.do('project/init', project)
+
+    return project;
 }

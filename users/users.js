@@ -1,54 +1,64 @@
 import fs from 'fs';
 
+import { client_request } from '../globals.js';
+import { send_all } from '../main.js';
+
 const data_file_path = './data/users.json';
 
-export default class Users {
+const users = get_file_data();
+const active_users = [];
 
-    constructor(){
+client_request.on('users', send_users)
+client_request.on('login', login)
+client_request.on('logout', logout)
 
-        this.active_users = [];
+function login({ data }){
 
-        this.all_users = get_file_data();
-    }
+    if( !data?.user?.email ) return;
 
-    login(user){
+    const user = data.user;
 
-        if( !user?.email ) return false;
+    add_user(user)
 
-        this.add_user(user)
+    if( active_users.find(i=>i.email===user.email) ) return;
 
-        if( this.active_users.find(i=>i.email===user.email) ) return false;
+    active_users.push(user)
 
-        this.active_users.push(user)
+    send_all('login', { user })
+}
 
-        return true;
-    }
+function logout({ data }){
 
-    logout(user){
+    if( !data?.user?.email ) return;
 
-        if( !user?.email ) return false;
+    const user = data.user;
 
-        const index_to_remove = this.active_users.findIndex(i=>i.email===user.email)
+    const index_to_remove = active_users.findIndex(i=>i.email===user.email)
 
-        if( index_to_remove === -1 ) return false;
+    if( index_to_remove === -1 ) return;
 
-        this.active_users.splice(index_to_remove, 1);
+    active_users.splice(index_to_remove, 1);
 
-        return true;
-    }
+    send_all('logout', { user })
+}
 
-    get_user_data(user_email){
-        return this.all_users.find(i=>i.email==user_email);
-    }
+function send_users({ ws }){
+    ws.send_client('users', {
+        users: active_users
+    })
+}
 
-    add_user(user){
+function add_user(user){
 
-        if( this.all_users.find(i=>i.email==user.email) ) return;
+    if( users.find(i=>i.email==user.email) ) return;
 
-        this.all_users.push(user)
-        
-        save_file_data(this.all_users)
-    }
+    users.push(user)
+
+    save()
+}
+
+export function get_user_data(user_email){
+    return users.find(i=>i.email==user_email);
 }
 
 function get_file_data(){
@@ -56,6 +66,6 @@ function get_file_data(){
     return file_data ? JSON.parse(file_data) : [];
 }
 
-function save_file_data(data){
-    fs.writeFile(data_file_path, JSON.stringify(data), ()=>{});
+function save(){
+    fs.writeFile(data_file_path, JSON.stringify(users), ()=>{});
 }

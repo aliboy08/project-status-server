@@ -1,61 +1,109 @@
-import Page from './page.js';
+import { hooks, client_request } from '../globals.js';
+import { send_all } from '../main.js';
+import { generate_id } from '../lib/utils.js';
 
-export default class Pages {
-    
-    constructor(project){
+hooks.on('project/init', init_pages)
+client_request.on('page/add', page_add)
+client_request.on('page/remove', page_remove)
+client_request.on('page/assign', page_assign)
 
-        this.project = project;
+function init_pages(project){
 
-        this.pages = [];
+    project.pages = [];
 
-        this.init_pages();
+    if( !project.data.pages ) return;
+
+    project.add_page = (page_name)=>{
+
+        const page_data = {
+            id: generate_id(page_name, project.pages),
+            name: page_name,
+            status: null,
+            assigned: [],
+        };
+
+        init_page(page_data, project)
+    }
+
+    project.get_page = (page_id)=>{        
+        return project.pages.find(i=>i.id===page_id)
+    }
+
+    project.data.pages.forEach(page_data=>{
+        init_page(page_data, project)
+    })
+
+    project.hooks.on('data', data=>{
+        data.pages = project.pages.map(page=>page.data)
+    })
+}
+
+function init_page(page_data, project){
+
+    const remove = ()=>{
+        const index = project.pages.findIndex(page);
+        project.pages.splice(index, 1);
+        project.save();
+    }
+
+    const assign = (user_email)=>{
+        page.data.assigned = [user_email];
+        project.save();
+    }
+
+    const page = {
+        id: page_data.id,
+        data: page_data,
+        remove,
+        assign,
     }
     
-    init_pages(){
+    project.pages.push(page)
+}
 
-        if( !this.project.data.pages ) return;
-        
-        this.project.data.pages.forEach(page_data=>{
-            this.pages.push(new Page(page_data))
-        })
-    }
+function page_add({ data }){
 
-    get_data(mode){
-        return this.pages.map(i=>i.get_data(mode))
-    }
+    const project = hooks.get('project', data.project_slug)
+    if( !project ) return;
+
+    const page = {
+        id: generate_id(data.page_name, project.pages),
+        name: data.page_name,
+        status: null,
+        assigned: [],
+    };
+
+    project.pages.push(page);
+
+    data.page_data = page;
+
+    send_all('page/add', data)
     
-    add(page_name){
+    project.save();
+}
 
-        if( this.get_page(page_name) ) return false;
+function page_remove({ data }){
 
-        const page = new Page({ name: page_name })
+    const project = hooks.get('project', data.project_slug)
+    if( !project ) return;
+    
+    const page = project.get_page(data.page_id)
+    if( !page ) return;
 
-        this.pages.push(page)
+    page.remove();
 
-        this.project.save();
+    send_all('page/remove', data)
+}
 
-        return page;
-    }
+function page_assign({ data }){
 
-    remove(page_name){
+    const project = hooks.get('project', data.project_slug)
+    if( !project ) return;
 
-        const page = this.get_page(page_name)
-        if( !page ) return false;
+    const page = project.get_page(data.page_id)
+    if( !page ) return;
 
-        this.pages.splice(this.pages.indexOf(page), 1);
+    page.assign(data.user)
 
-        this.project.save();
-
-        return true;
-    }
-
-    get_page(page_name){
-
-        for( const page of this.pages ) {
-            if( page.name === page_name ) return page;
-        }
-
-        return null;
-    }
-
+    send_all('page/assign', data)
 }
