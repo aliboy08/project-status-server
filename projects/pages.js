@@ -12,8 +12,8 @@ function page_add({data}){
     if( !project ) return;
     
     const page = {
-        id: generate_id(page_name, project.pages),
-        name: page_name,
+        id: generate_id(data.page_name, project.pages),
+        name: data.page_name,
         status: null,
         assigned: [],
         components: [],

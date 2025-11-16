@@ -23,6 +23,8 @@ function component_add({data}){
 
     page.components.push(component)
 
+    hooks.do('project/save', project)
+
     data.component = component;
 
     send_all('component/add', data)

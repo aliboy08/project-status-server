@@ -13,9 +13,7 @@ hooks.set('project', get_project)
 function send_project({ data, ws }){
     const project = hooks.get('project', data.project_id)
     if( !project ) return;
-    ws.send_client('project', {
-        project: project.get_data()
-    })
+    ws.send_client('project', { project })
 }
 
 function send_projects({ ws }){
